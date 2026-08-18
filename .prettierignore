@@ -2,3 +2,6 @@ public
 node_modules
 .quartz-cache
 .wrangler
+.vault-preview-content
+.publish-staging
+.publish-backup

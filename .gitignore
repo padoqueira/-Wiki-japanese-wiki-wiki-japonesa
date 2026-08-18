@@ -11,5 +11,8 @@ private/
 replit.nix
 .quartz/
 .wrangler/
+.vault-preview-content/
+.publish-staging/
+.publish-backup/
 quartz/cli/tui/dist/
 .turbo/
