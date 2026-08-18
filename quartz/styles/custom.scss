@@ -572,6 +572,17 @@ article :not(pre) > code {
   box-shadow: var(--jp-shadow);
 }
 
+.graph .graph-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.graph .graph-container:empty::after,
+.graph .graph-container:empty > * {
+  display: none;
+}
+
 .graph .graph-container canvas {
   filter: saturate(1.05) contrast(1.05);
 }
