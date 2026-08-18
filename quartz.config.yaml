@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=./quartz/plugins/quartz-plugins.schema.json
 configuration:
   pageTitle: 日本語版Wiki
-  pageTitleSuffix: ""
+  pageTitleSuffix: " · Japanese Wiki"
   enableSPA: true
   enablePopovers: true
   analytics:
@@ -18,30 +18,31 @@ configuration:
     fontOrigin: googleFonts
     cdnCaching: true
     typography:
-      header: Schibsted Grotesk
-      body: Source Sans Pro
+      title: Noto Serif JP
+      header: Noto Sans JP
+      body: Noto Sans JP
       code: IBM Plex Mono
     colors:
       lightMode:
-        light: "#faf8f8"
-        lightgray: "#e5e5e5"
-        gray: "#b8b8b8"
-        darkgray: "#4e4e4e"
-        dark: "#2b2b2b"
-        secondary: "#284b63"
-        tertiary: "#84a59d"
-        highlight: rgba(143, 159, 169, 0.15)
-        textHighlight: "#fff23688"
+        light: "#fbfaf8"
+        lightgray: "#e7e2dc"
+        gray: "#9b938a"
+        darkgray: "#4b4641"
+        dark: "#181513"
+        secondary: "#4f46e5"
+        tertiary: "#c2413a"
+        highlight: rgba(79, 70, 229, 0.11)
+        textHighlight: "#f7c6cf88"
       darkMode:
-        light: "#161618"
-        lightgray: "#393639"
-        gray: "#646464"
-        darkgray: "#d4d4d4"
-        dark: "#ebebec"
-        secondary: "#7b97aa"
-        tertiary: "#84a59d"
-        highlight: rgba(143, 159, 169, 0.15)
-        textHighlight: "#b3aa0288"
+        light: "#141416"
+        lightgray: "#302e33"
+        gray: "#77717d"
+        darkgray: "#d7d2dc"
+        dark: "#f7f3f8"
+        secondary: "#a5b4fc"
+        tertiary: "#f59a92"
+        highlight: rgba(165, 180, 252, 0.12)
+        textHighlight: "#8f394c88"
 plugins:
   - source: "@quartz-community/created-modified-date"
     enabled: true
@@ -84,7 +85,8 @@ plugins:
     order: 50
     layout:
       position: right
-      priority: 30
+      priority: 10
+      display: desktop-only
   - source: "@quartz-community/crawl-links"
     enabled: true
     options:
@@ -168,13 +170,14 @@ plugins:
     enabled: true
     layout:
       position: right
-      priority: 10
+      priority: 30
+      display: desktop-only
   - source: "@quartz-community/search"
     enabled: true
     layout:
-      position: left
+      position: header
       priority: 20
-      group: toolbar
+      group: site-header
       groupOptions:
         grow: true
   - source: "@quartz-community/backlinks"
@@ -182,6 +185,7 @@ plugins:
     layout:
       position: right
       priority: 50
+      display: desktop-only
   - source: "@quartz-community/article-title"
     enabled: true
     layout:
@@ -205,15 +209,15 @@ plugins:
   - source: "@quartz-community/darkmode"
     enabled: true
     layout:
-      position: left
+      position: header
       priority: 30
-      group: toolbar
+      group: site-header
   - source: "@quartz-community/reader-mode"
     enabled: true
     layout:
-      position: left
-      priority: 35
-      group: toolbar
+      position: header
+      priority: 40
+      group: site-header
   - source: "@quartz-community/breadcrumbs"
     enabled: true
     layout:
@@ -232,8 +236,8 @@ plugins:
     enabled: true
     options:
       links:
-        GitHub: https://github.com/jackyzha0/quartz
-        Discord Community: https://discord.gg/cRFFHYye7t
+        GitHub: https://github.com/padoqueira/-Wiki-japanese-wiki-wiki-japonesa
+        日本語版Wiki: https://japanese-wiki.juliofilhowork.workers.dev
     layout:
       position: footer
       priority: 50
@@ -277,6 +281,11 @@ plugins:
     order: 50
 layout:
   groups:
+    site-header:
+      priority: 20
+      direction: row
+      wrap: nowrap
+      gap: 0.65rem
     toolbar:
       priority: 35
       direction: row
