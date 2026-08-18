@@ -10,7 +10,9 @@ configuration:
   baseUrl: japanese-wiki.juliofilhowork.workers.dev
   ignorePatterns:
     - private
+    - Private
     - templates
+    - Templates
     - .obsidian
   theme:
     fontOrigin: googleFonts
@@ -116,9 +118,9 @@ plugins:
       theme: default
       mode: both
   - source: "@quartz-community/remove-draft"
-    enabled: false
-  - source: "@quartz-community/explicit-publish"
     enabled: true
+  - source: "@quartz-community/explicit-publish"
+    enabled: false
   - source: "@quartz-community/unlisted-pages"
     enabled: true
     options: {}

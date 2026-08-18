@@ -60,25 +60,6 @@ function Test-IgnoredRelativePath {
     return $false
 }
 
-function Test-PublishedMarkdown {
-    param([Parameter(Mandatory = $true)][string]$Path)
-
-    $text = [System.IO.File]::ReadAllText($Path)
-    $frontmatter = [regex]::Match(
-        $text,
-        '\A---\s*\r?\n(?<yaml>.*?)\r?\n---(?:\r?\n|\z)',
-        [System.Text.RegularExpressions.RegexOptions]::Singleline
-    )
-    if (-not $frontmatter.Success) {
-        return $false
-    }
-
-    return [regex]::IsMatch(
-        $frontmatter.Groups["yaml"].Value,
-        '(?im)^\s*publish\s*:\s*(?:true|"true"|''true'')\s*$'
-    )
-}
-
 function Restore-ContentBackup {
     if (Test-Path -LiteralPath $ContentPath) {
         Remove-Item -LiteralPath $ContentPath -Recurse -Force
@@ -86,6 +67,49 @@ function Restore-ContentBackup {
     if (Test-Path -LiteralPath $BackupPath) {
         Move-Item -LiteralPath $BackupPath -Destination $ContentPath
         Write-Host "O content anterior foi restaurado." -ForegroundColor Yellow
+    }
+}
+
+function Get-StagedGitPaths {
+    $paths = @(& git -C $ProjectRoot -c core.quotePath=false diff --cached --name-only)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Falha ao consultar os arquivos staged no Git."
+    }
+    return @($paths | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
+function Test-SafeStagedPath {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string[]]$AllowedRoots
+    )
+
+    $normalizedPath = $Path.Replace("\", "/")
+    foreach ($allowed in $AllowedRoots) {
+        $normalizedAllowed = $allowed.Replace("\", "/").TrimEnd("/")
+        if ($normalizedPath -eq $normalizedAllowed) {
+            return $true
+        }
+        if ($normalizedAllowed -eq "content" -and $normalizedPath.StartsWith("content/")) {
+            return $true
+        }
+    }
+    return $false
+}
+
+function Assert-SafeStagedPaths {
+    param(
+        [Parameter(Mandatory = $true)][string[]]$Paths,
+        [Parameter(Mandatory = $true)][string[]]$AllowedRoots
+    )
+
+    $unexpected = @(
+        $Paths | Where-Object {
+            -not (Test-SafeStagedPath -Path $_ -AllowedRoots $AllowedRoots)
+        }
+    )
+    if ($unexpected.Count -gt 0) {
+        throw "Existem arquivos staged fora da allowlist segura: $($unexpected -join ', '). Remova-os do stage antes de publicar."
     }
 }
 
@@ -119,21 +143,18 @@ try {
         throw "A branch esperada é v5. Branch atual: $branch"
     }
 
-    Write-Step "Selecionando somente notas com publish: true"
+    Write-Step "Copiando todo o conteúdo público do vault"
     if (Test-Path -LiteralPath $StagingPath) {
         Remove-Item -LiteralPath $StagingPath -Recurse -Force
     }
     New-Item -ItemType Directory -Path $StagingPath | Out-Null
     Copy-Item -LiteralPath $LandingPage -Destination (Join-Path $StagingPath "index.md")
 
-    $published = New-Object System.Collections.Generic.List[string]
-    $markdownFiles = Get-ChildItem -LiteralPath $VaultPath -Recurse -File -Filter "*.md"
-    foreach ($file in $markdownFiles) {
+    $copied = New-Object System.Collections.Generic.List[string]
+    $vaultFiles = Get-ChildItem -LiteralPath $VaultPath -Recurse -File
+    foreach ($file in $vaultFiles) {
         $relativePath = Get-RelativeVaultPath -BasePath $VaultPath -FullPath $file.FullName
         if (Test-IgnoredRelativePath -RelativePath $relativePath) {
-            continue
-        }
-        if (-not (Test-PublishedMarkdown -Path $file.FullName)) {
             continue
         }
         if ($relativePath -ieq "index.md") {
@@ -147,21 +168,31 @@ try {
             New-Item -ItemType Directory -Path $destinationFolder -Force | Out-Null
         }
         Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
-        $published.Add($relativePath)
-        Write-Host "PUBLICAR: $relativePath" -ForegroundColor Green
+        $copied.Add($relativePath)
+        Write-Host "COPIAR: $relativePath" -ForegroundColor Green
     }
 
-    Write-Host "Notas públicas encontradas: $($published.Count)" -ForegroundColor Green
-    if ($published.Count -eq 0) {
-        Write-Host "Aviso: somente a landing page será publicada." -ForegroundColor Yellow
+    Write-Host "Arquivos do vault copiados: $($copied.Count)" -ForegroundColor Green
+    if ($copied.Count -eq 0) {
+        throw "Nenhum arquivo público foi encontrado no vault."
     }
 
     Write-Step "Substituindo content de forma transacional"
     if (Test-Path -LiteralPath $BackupPath) {
         Remove-Item -LiteralPath $BackupPath -Recurse -Force
     }
-    Move-Item -LiteralPath $ContentPath -Destination $BackupPath
-    Move-Item -LiteralPath $StagingPath -Destination $ContentPath
+    $contentMovedToBackup = $false
+    try {
+        Move-Item -LiteralPath $ContentPath -Destination $BackupPath
+        $contentMovedToBackup = $true
+        Move-Item -LiteralPath $StagingPath -Destination $ContentPath
+    }
+    catch {
+        if ($contentMovedToBackup -and (Test-Path -LiteralPath $BackupPath)) {
+            Restore-ContentBackup
+        }
+        throw
+    }
 
     try {
         Write-Step "Construindo Quartz"
@@ -225,18 +256,23 @@ try {
         "quartz.config.yaml",
         "wrangler.jsonc"
     )
+    Assert-SafeStagedPaths -Paths @(Get-StagedGitPaths) -AllowedRoots $safePaths
+
     & git -C $ProjectRoot add -- $safePaths
     if ($LASTEXITCODE -ne 0) {
         throw "Falha ao preparar arquivos seguros para o Git."
     }
 
-    & git -C $ProjectRoot diff --cached --quiet
+    Assert-SafeStagedPaths -Paths @(Get-StagedGitPaths) -AllowedRoots $safePaths
+
+    & git -C $ProjectRoot diff --cached --quiet -- $safePaths
     $diffExit = $LASTEXITCODE
     if ($diffExit -eq 1) {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-        Invoke-Checked -Command "git" -Arguments @(
-            "-C", $ProjectRoot, "commit", "-m", "Publish Japanese Wiki update $timestamp"
-        )
+        $commitArguments = @(
+            "-C", $ProjectRoot, "commit", "-m", "Publish Japanese Wiki update $timestamp", "--"
+        ) + $safePaths
+        Invoke-Checked -Command "git" -Arguments $commitArguments
     }
     elseif ($diffExit -gt 1) {
         throw "Falha ao verificar alterações staged no Git."
