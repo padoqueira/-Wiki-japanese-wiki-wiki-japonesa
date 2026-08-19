@@ -703,6 +703,10 @@ footer a:hover {
     box-sizing: border-box !important;
     font-size: 0.92rem;
     line-height: 1.65;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    hyphens: auto;
   }
 
   article .article-title {
