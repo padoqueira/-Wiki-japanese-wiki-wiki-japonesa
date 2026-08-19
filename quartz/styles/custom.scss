@@ -231,7 +231,7 @@
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
 }
 
-/* Override Quartz darkmode button sizing */
+/* Override Quartz darkmode button sizing — preserve display:none on hidden icon */
 .darkmode {
   width: 2.4rem !important;
   height: 2.4rem !important;
@@ -244,7 +244,9 @@
   place-items: center !important;
 }
 
-.darkmode svg {
+/* Target only visible icon — preserve display:none on .dayIcon in dark / .nightIcon in light */
+.darkmode > .dayIcon,
+.darkmode > .nightIcon {
   position: static !important;
   width: 1.1rem !important;
   height: 1.1rem !important;
@@ -254,12 +256,29 @@
   transition: opacity 0.1s ease !important;
 }
 
+/* Ensure hidden icons stay hidden */
+:root[saved-theme="dark"] .darkmode > .dayIcon,
+.darkmode > .nightIcon {
+  display: none !important;
+}
+
+:root[saved-theme="light"] .darkmode > .nightIcon,
+:root .darkmode > .nightIcon {
+  display: none !important;
+}
+
+:root[saved-theme="light"] .darkmode > .dayIcon,
+:root .darkmode > .dayIcon {
+  display: inline-block !important;
+}
+
 .darkmode:hover {
   border-color: var(--jp-border-strong) !important;
   color: var(--secondary) !important;
 }
 
-.darkmode:hover svg {
+.darkmode:hover > .dayIcon,
+.darkmode:hover > .nightIcon {
   fill: var(--secondary) !important;
 }
 
