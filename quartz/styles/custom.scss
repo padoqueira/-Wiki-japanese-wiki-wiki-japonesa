@@ -256,17 +256,19 @@
   transition: opacity 0.1s ease !important;
 }
 
-/* Ensure hidden icons stay hidden */
-:root[saved-theme="dark"] .darkmode > .dayIcon,
-.darkmode > .nightIcon {
+/* Dark mode: show moon, hide sun */
+:root[saved-theme="dark"] .darkmode > .dayIcon {
   display: none !important;
 }
+:root[saved-theme="dark"] .darkmode > .nightIcon {
+  display: inline-block !important;
+}
 
+/* Light mode: show sun, hide moon */
 :root[saved-theme="light"] .darkmode > .nightIcon,
 :root .darkmode > .nightIcon {
   display: none !important;
 }
-
 :root[saved-theme="light"] .darkmode > .dayIcon,
 :root .darkmode > .dayIcon {
   display: inline-block !important;
