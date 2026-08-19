@@ -8,4 +8,9 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   },
+  "build": {
+    "command": "npx quartz build",
+    "cwd": ".",
+    "output_dir": "./public"
+  },
 }
