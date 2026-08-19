@@ -231,7 +231,15 @@
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
 }
 
-/* Override Quartz darkmode button sizing — keep SVG position:absolute */
+/* ============================================================
+   DARKMODE BUTTON — fix 4 cut icons bug
+   Root cause: the @quartz-community/darkmode component ships
+   its OWN css (component-77d6a441.css) loaded AFTER index.css.
+   Its rules set `.darkmode>.dayIcon{display:none}` and
+   `:root .darkmode>.dayIcon{display:inline}` so BOTH icons can
+   show. We must out-specify it with :root:root and !important,
+   and clip the button so nothing escapes the 2.4rem box.
+   ============================================================ */
 .darkmode {
   width: 2.4rem !important;
   height: 2.4rem !important;
@@ -240,13 +248,13 @@
   border-radius: 8px !important;
   background: var(--jp-surface-3) !important;
   position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: inline-block !important;
   flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 
-/* Keep Quartz original SVG positioning — just resize */
+/* Both SVGs absolutely centered; only one shown at a time */
 .darkmode > .dayIcon,
 .darkmode > .nightIcon {
   position: absolute !important;
@@ -259,22 +267,27 @@
   transition: opacity 0.1s ease !important;
 }
 
-/* Ensure hidden icons stay hidden */
-:root[saved-theme="dark"] .darkmode > .dayIcon,
-:root[saved-theme="light"] .darkmode > .nightIcon,
-:root .darkmode > .nightIcon {
+/* LIGHT (default) theme → show SUN, hide MOON
+   doubled :root:root raises specificity above the component css */
+:root:root .darkmode > .dayIcon,
+:root:root[saved-theme="light"] .darkmode > .dayIcon {
+  display: block !important;
+}
+:root:root .darkmode > .nightIcon,
+:root:root[saved-theme="light"] .darkmode > .nightIcon {
   display: none !important;
 }
 
-:root[saved-theme="dark"] .darkmode > .nightIcon,
-:root[saved-theme="light"] .darkmode > .dayIcon,
-:root .darkmode > .dayIcon {
+/* DARK theme → show MOON, hide SUN */
+:root:root[saved-theme="dark"] .darkmode > .nightIcon {
   display: block !important;
+}
+:root:root[saved-theme="dark"] .darkmode > .dayIcon {
+  display: none !important;
 }
 
 .darkmode:hover {
   border-color: var(--jp-border-strong) !important;
-  color: var(--secondary) !important;
 }
 
 .darkmode:hover > .dayIcon,
