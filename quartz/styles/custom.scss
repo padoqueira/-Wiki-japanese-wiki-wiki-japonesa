@@ -231,50 +231,22 @@
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
 }
 
-/* ============================================================
-   DARKMODE BUTTON — final fix
-   Root cause: Sass collapses theme-conditional selectors into
-   unconditional rules, creating conflicting .dayIcon/.nightIcon
-   display declarations. The Quartz darkmode component already
-   toggles .dayIcon/.nightIcon via its own CSS + saved-theme
-   attribute on :root. We must NOT override display; we only
-   override SIZE and center the active icon.
-   ============================================================ */
-.darkmode {
+/* Header action icons -------------------------------------------------------
+ * @quartz-themes/core renders Darkmode/ReaderMode icons as 24px CSS masks.
+ * CSS masks repeat by default; enlarging the button to 2.4rem without setting
+ * mask-repeat tiles the 24px sun/moon, which is what produced the four clipped
+ * icon fragments. Keep the larger hit target, but render one centered icon.
+ */
+.page-header :is(.darkmode, .readermode) {
   width: 2.4rem !important;
   height: 2.4rem !important;
-  padding: 0 !important;
-  border: 1px solid var(--jp-border) !important;
   border-radius: 8px !important;
-  background: var(--jp-surface-3) !important;
-  position: relative !important;
-  display: inline-block !important;
-  flex-shrink: 0 !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-}
-
-/* Size + center both icons; do NOT set display here.
-   The Quartz component handles which icon is visible. */
-.darkmode > .dayIcon,
-.darkmode > .nightIcon {
-  width: 1.2rem !important;
-  height: 1.2rem !important;
-  fill: var(--darkgray) !important;
-  transition: opacity 0.1s ease !important;
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-}
-
-.darkmode:hover {
-  border-color: var(--jp-border-strong) !important;
-}
-
-.darkmode:hover > .dayIcon,
-.darkmode:hover > .nightIcon {
-  fill: var(--secondary) !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+  -webkit-mask-position: center !important;
+  mask-position: center !important;
+  -webkit-mask-size: 1.2rem 1.2rem !important;
+  mask-size: 1.2rem 1.2rem !important;
 }
 
 .page-header button:not(.search-button):hover {
