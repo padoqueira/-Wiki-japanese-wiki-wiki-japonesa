@@ -89,6 +89,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  height: 100vh;
 }
 
 .page > #quartz-body .page-header {
@@ -565,7 +566,7 @@ article :not(pre) > code {
 /* Graph */
 
 .graph > .graph-outer {
-  height: 200px !important;
+  height: 280px !important;
   background: var(--jp-surface);
   border: 1px solid var(--jp-border) !important;
   border-radius: var(--jp-radius) !important;
@@ -734,5 +735,41 @@ footer a:hover {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================================================== */
+/* Focus states — accessibility                                               */
+/* ========================================================================== */
+
+*:focus-visible {
+  outline: 2px solid var(--jp-indigo);
+  outline-offset: 1px;
+  border-radius: 3px;
+}
+
+.page-header .search > .search-button:focus-visible,
+.page-header button:focus-visible {
+  outline: 2px solid var(--jp-indigo);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.sidebar.right a:focus-visible {
+  outline: 2px solid var(--jp-indigo);
+  outline-offset: 1px;
+}
+
+/* ========================================================================== */
+/* Short content — vertical centering                                         */
+/* ========================================================================== */
+
+.page:has(.sidebar.right) > #quartz-body {
+  align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .page > #quartz-body .center > article {
+    /* Don't stretch — keep readable width, but fill vertically when content is short */
   }
 }
