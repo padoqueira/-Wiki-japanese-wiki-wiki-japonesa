@@ -120,6 +120,15 @@
   height: 100vh;
 }
 
+/* Make footer span all columns — no dead space below content */
+.page > #quartz-body footer {
+  grid-column: 1 / -1;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0.6rem 1.5rem;
+}
+
 .page > #quartz-body .page-header {
   margin: 0 !important;
   padding: 0.75rem 0 0.5rem;
