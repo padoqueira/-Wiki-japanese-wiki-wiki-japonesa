@@ -34,7 +34,13 @@
 }
 
 /* ========================================================================== */
-/* Page shell — kill dead space on 4K+ */
+/* Page shell — kill dead space on 4K+, override Quartz wrapper */
+.page {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
 
 .page > #quartz-body {
   box-sizing: border-box;
