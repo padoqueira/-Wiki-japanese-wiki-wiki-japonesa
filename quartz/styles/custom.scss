@@ -232,13 +232,17 @@
 }
 
 /* ============================================================
-   DARKMODE BUTTON — fix 4 cut icons bug
-   Root cause: the @quartz-community/darkmode component ships
-   its OWN css (component-77d6a441.css) loaded AFTER index.css.
-   Its rules set `.darkmode>.dayIcon{display:none}` and
-   `:root .darkmode>.dayIcon{display:inline}` so BOTH icons can
-   show. We must out-specify it with :root:root and !important,
-   and clip the button so nothing escapes the 2.4rem box.
+   DARKMODE BUTTON — fix 4-cut-icons / double-icon bug
+   Root cause verified: the Quartz component stylesheet
+   (component-77d6a441.css) loads AFTER index.css. Earlier
+   attempts used :root selectors that Sass collapsed into
+   unconditional rules, so both .dayIcon and .nightIcon ended
+   up display:block !important simultaneously. The "4 cut
+   icons" are actually 2 full SVGs (sun + moon) absolutely
+   positioned on top of each other inside the button.
+   Fix: use html[saved-theme=...] selectors so Sass cannot
+   strip the theme condition, and make exactly one icon
+   visible per theme.
    ============================================================ */
 .darkmode {
   width: 2.4rem !important;
@@ -268,21 +272,21 @@
 }
 
 /* LIGHT (default) theme → show SUN, hide MOON
-   doubled :root:root raises specificity above the component css */
-:root:root .darkmode > .dayIcon,
-:root:root[saved-theme="light"] .darkmode > .dayIcon {
+   html element carries saved-theme="light" or no attr at all */
+html .darkmode > .dayIcon,
+:root[saved-theme="light"] .darkmode > .dayIcon {
   display: block !important;
 }
-:root:root .darkmode > .nightIcon,
-:root:root[saved-theme="light"] .darkmode > .nightIcon {
+html .darkmode > .nightIcon,
+:root[saved-theme="light"] .darkmode > .nightIcon {
   display: none !important;
 }
 
 /* DARK theme → show MOON, hide SUN */
-:root:root[saved-theme="dark"] .darkmode > .nightIcon {
+html[saved-theme="dark"] .darkmode > .nightIcon {
   display: block !important;
 }
-:root:root[saved-theme="dark"] .darkmode > .dayIcon {
+html[saved-theme="dark"] .darkmode > .dayIcon {
   display: none !important;
 }
 
