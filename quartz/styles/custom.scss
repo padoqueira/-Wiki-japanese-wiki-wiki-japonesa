@@ -141,6 +141,8 @@
 
 .page-header > header {
   margin: 0;
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -242,6 +244,13 @@
   transition:
     border-color 140ms ease,
     color 140ms ease;
+  /* Ensure SVG icons are centered regardless of their intrinsic size */
+  & > svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    max-width: 1.4rem;
+    max-height: 1.4rem;
+  }
 }
 
 .page-header button:not(.search-button):hover {
