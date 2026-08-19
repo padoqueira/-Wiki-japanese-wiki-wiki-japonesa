@@ -231,26 +231,36 @@
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
 }
 
-.page-header button:not(.search-button) {
-  display: grid;
-  width: 2.4rem;
-  height: 2.4rem;
-  place-items: center;
-  padding: 0;
-  background: var(--jp-surface-3);
-  border: 1px solid var(--jp-border);
-  border-radius: 8px;
-  color: var(--darkgray);
-  transition:
-    border-color 140ms ease,
-    color 140ms ease;
-  /* Ensure SVG icons are centered regardless of their intrinsic size */
-  & > svg {
-    width: 1.2rem;
-    height: 1.2rem;
-    max-width: 1.4rem;
-    max-height: 1.4rem;
-  }
+/* Override Quartz darkmode button sizing */
+.darkmode {
+  width: 2.4rem !important;
+  height: 2.4rem !important;
+  padding: 0 !important;
+  border: 1px solid var(--jp-border) !important;
+  border-radius: 8px !important;
+  background: var(--jp-surface-3) !important;
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.darkmode svg {
+  position: static !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  top: auto !important;
+  left: auto !important;
+  fill: var(--darkgray) !important;
+  transition: opacity 0.1s ease !important;
+}
+
+.darkmode:hover {
+  border-color: var(--jp-border-strong) !important;
+  color: var(--secondary) !important;
+}
+
+.darkmode:hover svg {
+  fill: var(--secondary) !important;
 }
 
 .page-header button:not(.search-button):hover {
