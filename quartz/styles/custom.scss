@@ -232,17 +232,13 @@
 }
 
 /* ============================================================
-   DARKMODE BUTTON — fix 4-cut-icons / double-icon bug
-   Root cause verified: the Quartz component stylesheet
-   (component-77d6a441.css) loads AFTER index.css. Earlier
-   attempts used :root selectors that Sass collapsed into
-   unconditional rules, so both .dayIcon and .nightIcon ended
-   up display:block !important simultaneously. The "4 cut
-   icons" are actually 2 full SVGs (sun + moon) absolutely
-   positioned on top of each other inside the button.
-   Fix: use html[saved-theme=...] selectors so Sass cannot
-   strip the theme condition, and make exactly one icon
-   visible per theme.
+   DARKMODE BUTTON — final fix
+   Root cause: Sass collapses theme-conditional selectors into
+   unconditional rules, creating conflicting .dayIcon/.nightIcon
+   display declarations. The Quartz darkmode component already
+   toggles .dayIcon/.nightIcon via its own CSS + saved-theme
+   attribute on :root. We must NOT override display; we only
+   override SIZE and center the active icon.
    ============================================================ */
 .darkmode {
   width: 2.4rem !important;
@@ -258,36 +254,18 @@
   overflow: hidden !important;
 }
 
-/* Both SVGs absolutely centered; only one shown at a time */
+/* Size + center both icons; do NOT set display here.
+   The Quartz component handles which icon is visible. */
 .darkmode > .dayIcon,
 .darkmode > .nightIcon {
-  position: absolute !important;
   width: 1.2rem !important;
   height: 1.2rem !important;
+  fill: var(--darkgray) !important;
+  transition: opacity 0.1s ease !important;
+  position: absolute !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
-  fill: var(--darkgray) !important;
-  transition: opacity 0.1s ease !important;
-}
-
-/* LIGHT (default) theme → show SUN, hide MOON
-   html element carries saved-theme="light" or no attr at all */
-html .darkmode > .dayIcon,
-:root[saved-theme="light"] .darkmode > .dayIcon {
-  display: block !important;
-}
-html .darkmode > .nightIcon,
-:root[saved-theme="light"] .darkmode > .nightIcon {
-  display: none !important;
-}
-
-/* DARK theme → show MOON, hide SUN */
-html[saved-theme="dark"] .darkmode > .nightIcon {
-  display: block !important;
-}
-html[saved-theme="dark"] .darkmode > .dayIcon {
-  display: none !important;
 }
 
 .darkmode:hover {
