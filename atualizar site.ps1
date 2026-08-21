@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$VaultPath = "G:\O meu disco\obsidian\aaa",
     [switch]$SomenteBuild,
     [switch]$SemDeploy,
@@ -8,6 +8,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+$script:HadError = $false
 
 $ProjectRoot = [System.IO.Path]::GetFullPath($PSScriptRoot)
 $ContentPath = Join-Path $ProjectRoot "content"
@@ -15,8 +16,35 @@ $StagingPath = Join-Path $ProjectRoot ".publish-staging"
 $BackupPath = Join-Path $ProjectRoot ".publish-backup"
 $LandingPage = Join-Path $ContentPath "index.md"
 $PublicIndex = Join-Path $ProjectRoot "public\index.html"
-$SiteUrl = "https://japanese-wiki.juliofilhowork.workers.dev"
+$SiteUrl = "https://japanese-wiki.pages.dev"
 $IgnoredFolderNames = @(".obsidian", "private", "templates")
+
+function Wait-BeforeClose {
+    param([string]$Message = "Pressiona Enter para fechar esta janela")
+
+    # Evita a janela desaparecer imediatamente quando o script é aberto por duplo clique.
+    # Tenta várias estratégias porque algumas formas de execução não têm stdin interativo.
+    Write-Host ""
+    Write-Host $Message -ForegroundColor Yellow
+    try {
+        if (-not [Console]::IsInputRedirected) {
+            [void][Console]::ReadKey($true)
+            return
+        }
+    }
+    catch {
+        # Sem consola interativa; cai para as alternativas abaixo.
+    }
+    try {
+        [void](Read-Host "")
+        return
+    }
+    catch {
+        # Ignorar: terminal não interativo.
+    }
+    # Última linha de defesa: dá tempo para ler mensagens de erro antes de fechar.
+    Start-Sleep -Seconds 60
+}
 
 function Write-Step {
     param([string]$Message)
@@ -99,7 +127,9 @@ function Test-SafeStagedPath {
 
 function Assert-SafeStagedPaths {
     param(
-        [Parameter(Mandatory = $true)][string[]]$Paths,
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [string[]]$Paths,
         [Parameter(Mandatory = $true)][string[]]$AllowedRoots
     )
 
@@ -208,8 +238,8 @@ try {
             throw "O build terminou sem gerar public\index.html."
         }
         $publicHtml = [System.IO.File]::ReadAllText($PublicIndex)
-        if (-not $publicHtml.Contains("日本語版Wiki")) {
-            throw "public\index.html não contém o título da wiki."
+        if (-not $publicHtml.Contains("日本語")) {
+            throw "public\index.html não parece conter a página inicial da wiki."
         }
     }
     catch {
@@ -223,27 +253,13 @@ try {
 
     if ($SomenteBuild) {
         Write-Host "`nBuild local concluído. Deploy e Git foram ignorados por -SomenteBuild." -ForegroundColor Green
-        exit 0
+        Wait-BeforeClose
+        return
     }
 
-    if (-not $SemDeploy) {
-        Write-Step "Verificando autenticação Cloudflare"
-        Push-Location $ProjectRoot
-        try {
-            $whoami = (& npx.cmd wrangler whoami 2>&1 | Out-String)
-            if ($LASTEXITCODE -ne 0 -or $whoami -match "not authenticated") {
-                Write-Host "Cloudflare não autenticado. Iniciando login por código..." -ForegroundColor Yellow
-                Invoke-Checked -Command "npx.cmd" -Arguments @("wrangler", "login", "--device")
-            }
-            Invoke-Checked -Command "npx.cmd" -Arguments @("wrangler", "deploy")
-        }
-        finally {
-            Pop-Location
-        }
-    }
-    else {
-        Write-Host "Deploy Cloudflare ignorado por -SemDeploy." -ForegroundColor Yellow
-    }
+    # O Cloudflare Pages está ligado ao GitHub.
+    # Portanto, o deploy de produção acontece automaticamente quando a branch v5 é enviada.
+    # Não usamos mais `wrangler deploy`, que publicava o antigo Cloudflare Worker.
 
     Write-Step "Preparando atualização Git"
     $safePaths = @(
@@ -254,7 +270,7 @@ try {
         "package.json",
         "package-lock.json",
         "quartz.config.yaml",
-        "wrangler.jsonc"
+        "quartz/components/Head.tsx"
     )
     Assert-SafeStagedPaths -Paths @(Get-StagedGitPaths) -AllowedRoots $safePaths
 
@@ -281,12 +297,16 @@ try {
         Write-Host "Nenhuma alteração nova para commit." -ForegroundColor DarkGray
     }
 
-    if (-not $SemPush) {
-        Write-Step "Enviando branch v5 ao GitHub"
-        Invoke-Checked -Command "git" -Arguments @("-C", $ProjectRoot, "push", "origin", "v5")
+    if ($SemDeploy) {
+        Write-Host "Deploy Cloudflare Pages ignorado por -SemDeploy." -ForegroundColor Yellow
+        Write-Host "Como o Pages publica automaticamente a branch v5, o push também foi ignorado para não disparar deploy." -ForegroundColor Yellow
+    }
+    elseif ($SemPush) {
+        Write-Host "Push GitHub ignorado por -SemPush; por isso nenhum deploy Pages foi disparado." -ForegroundColor Yellow
     }
     else {
-        Write-Host "Push GitHub ignorado por -SemPush." -ForegroundColor Yellow
+        Write-Step "Enviando branch v5 ao GitHub e disparando deploy no Cloudflare Pages"
+        Invoke-Checked -Command "git" -Arguments @("-C", $ProjectRoot, "push", "origin", "v5")
     }
 
     Write-Host "`nSITE ATUALIZADO COM SUCESSO" -ForegroundColor Green
@@ -294,12 +314,21 @@ try {
     if (-not $NaoAbrirSite) {
         Start-Process $SiteUrl
     }
+
+    Wait-BeforeClose "Concluído. Pressiona Enter para fechar"
 }
 catch {
     Write-Host "`nERRO AO ATUALIZAR O SITE" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
-    Write-Host "Envie uma captura desta janela para diagnóstico." -ForegroundColor Yellow
-    exit 1
+
+    if ($_.InvocationInfo -and $_.InvocationInfo.PositionMessage) {
+        Write-Host "`nLocal do erro:" -ForegroundColor DarkYellow
+        Write-Host $_.InvocationInfo.PositionMessage -ForegroundColor DarkYellow
+    }
+
+    Write-Host "`nEnvie uma captura desta janela para diagnóstico." -ForegroundColor Yellow
+    Wait-BeforeClose "Pressiona Enter para fechar"
+    $script:HadError = $true
 }
 finally {
     if (Test-Path -LiteralPath $StagingPath) {

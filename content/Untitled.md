@@ -597,4 +597,4 @@ Isto é `código inline`.
 - [ ] Funciona no Obsidian Live Preview
 - [ ] Funciona no Obsidian Reading View
 - [ ] Funciona/importa no SiYuan
-- [ ] Exportação para Markdown preserva o conteúdo
+- [x] Exportação para Markdown preserva o conteúdo
